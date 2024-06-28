@@ -8,18 +8,24 @@ import (
 func Test_parseBundle(t *testing.T) {
 	tests := []struct {
 		name    string
-		path    string
+		params  certParserParams
 		want    certList
 		wantErr bool
 	}{
 		{
 			name: "only private key",
-			path: "testfiles/test_key.pem",
 			want: certList{},
+			params: certParserParams{
+				bundlePath: "testfiles/ca_bundle.pem",
+				searchText: "",
+			},
 		},
 		{
 			name: "cert",
-			path: "testfiles/test_cert.pem",
+			params: certParserParams{
+				bundlePath: "testfiles/test_cert.pem",
+				searchText: "",
+			},
 			want: certList{
 				certInfo{
 					subject:    "CN=example.org,O=self,L=Amsterdam,ST=NL,C=NL",
@@ -31,7 +37,7 @@ func Test_parseBundle(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseBundle(tt.path)
+			got, err := parseBundle(tt.params)
 			got.Print()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseBundle() error = %v, wantErr %v", err, tt.wantErr)

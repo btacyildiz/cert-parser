@@ -5,6 +5,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"os"
+	"strings"
 )
 
 const (
@@ -33,8 +34,8 @@ func (l certList) Print() {
 	}
 }
 
-func parseBundle(path string) (certList, error) {
-	data, err := os.ReadFile(path)
+func parseBundle(params certParserParams) (certList, error) {
+	data, err := os.ReadFile(params.bundlePath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read cert bundle %s", err)
 	}
@@ -46,6 +47,11 @@ func parseBundle(path string) (certList, error) {
 			if err != nil {
 				return nil, fmt.Errorf("unexpected cert found")
 			}
+
+			if params.searchText != "" && !doesCertContains(cert, params.searchText) {
+				continue
+			}
+
 			list = append(list, certInfo{
 				subject:    cert.Subject.String(),
 				issuer:     cert.Issuer.String(),
@@ -58,4 +64,15 @@ func parseBundle(path string) (certList, error) {
 		}
 	}
 	return list, nil
+}
+
+func doesCertContains(cert *x509.Certificate, searchText string) bool {
+	return doesContain(cert.Subject.String(), searchText) ||
+		doesContain(cert.Issuer.String(), searchText) ||
+		doesContain(cert.Issuer.SerialNumber, searchText) ||
+		doesContain(cert.Subject.SerialNumber, searchText)
+}
+
+func doesContain(text, searchText string) bool {
+	return strings.Contains(strings.ToLower(text), strings.ToLower(searchText))
 }
